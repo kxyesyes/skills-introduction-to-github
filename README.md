@@ -49,3 +49,78 @@ In this exercise, you will:
 ---
 
 &copy; 2025 GitHub &bull; [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/code_of_conduct.md) &bull; [MIT License](https://gh.io/mit)
+
+## ChemAgent (LangChain + Ollama)
+
+An extensible chemistry agent inspired by ChemCrow. It provides:
+
+- Molecular property calculator: SMILES → MW, LogP, TPSA, HBD/HBA, etc.
+- ADMET prediction: SMILES → absorption/distribution/metabolism/excretion/toxicity via pluggable backends.
+- Reaction prediction: reactant SMILES → predicted products (API or LLM fallback).
+- Retrosynthesis: product SMILES → suggested routes (API or LLM fallback).
+- Similarity tools: Tanimoto between two molecules; search similar molecules in a local dataset.
+- Literature/knowledge search: DuckDuckGo, Wikipedia, arXiv, SerpAPI (optional).
+
+Backed by LangChain and a local Ollama model (e.g., `llama3`).
+
+### Setup
+
+1) System prerequisites
+- Install Ollama and pull a model (e.g., `ollama pull llama3`).
+- Python 3.10+ recommended.
+
+2) Create environment and install deps
+```bash
+cd /workspace
+python -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+3) Configure environment
+- Copy `.env.example` to `.env` and fill in any API keys or endpoints you have.
+- For similarity search, place a dataset at `chemagent/data/molecules.csv` or `chemagent/data/molecules.smi` (see format below).
+
+### RDKit
+- RDKit is optional by default to ease installation. To enable property and similarity tools, install RDKit.
+- Recommended: use a Python version and platform with prebuilt wheels. Example:
+```bash
+pip install rdkit-pypi==2022.9.5
+```
+If wheels are unavailable, use Conda: `conda install -c rdkit rdkit`.
+
+### SerpAPI
+- To enable `serpapi_search`, set `SERPAPI_API_KEY` in `.env`.
+
+### Dataset formats
+- `chemagent/data/molecules.csv` with columns: `smiles,name` (name optional)
+- or `chemagent/data/molecules.smi`, whitespace-separated: `SMILES  Name` per line (name optional)
+
+### Run the CLI
+```bash
+source .venv/bin/activate
+python -m chemagent.cli chat --model llama3
+```
+Example commands inside the chat:
+- "计算这个分子的性质: C1=CC=CC=C1O"
+- "预测ADMET: CC(=O)Oc1ccccc1C(=O)O"
+- "两个分子相似度: c1ccccc1, C1=CC=CC=C1O"
+- "对这个反应物预测产物: CCBr.O=C=O"
+
+You can also call tools directly:
+```bash
+python -m chemagent.cli props "C1=CC=CC=C1O"
+python -m chemagent.cli tanimoto "c1ccccc1" "C1=CC=CC=C1O"
+python -m chemagent.cli simsearch "CCO" --top-k 5
+```
+
+### Optional external backends
+- ADMET: set `ADMET_API_URL` to a service that accepts `POST {"smiles": "..."}` and returns JSON fields for ADMET endpoints.
+- Reaction prediction: set `REACTION_API_URL` similarly, or rely on LLM fallback.
+- Retrosynthesis: set `RETRO_API_URL`, or rely on LLM fallback.
+- SerpAPI: set `SERPAPI_API_KEY` to enable SerpAPI-powered search.
+
+### Notes
+- RDKit is required for most chemistry tools. If import fails, the tool will report a helpful error.
+- LLM fallbacks are heuristic and for research only; do not use for critical decisions.
