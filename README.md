@@ -1,3 +1,74 @@
+## Pharm Agent (Chemcrow-inspired)
+
+Pharmaceutical chemistry assistants built with LangChain, RDKit, and local/remote LLMs (Ollama or Qwen-compatible OpenAI API).
+
+### Features
+- RDKit molecular properties (MW, LogP, TPSA, HBD/HBA, formula)
+- ADMET prediction (heuristics + external API hook)
+- Reaction prediction (API or LLM heuristic)
+- Retrosynthesis analysis (LLM heuristic)
+- Similarity search (Tanimoto) on a local dataset
+- Literature search (DuckDuckGo, Wikipedia, arXiv, SerpAPI)
+- Visualization (molecule image, property plots)
+
+### Install
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+# Optional: install package for easy module execution
+pip install -e .
+```
+
+RDKit wheels are used via `rdkit-pypi`. If you have system RDKit, adjust as needed.
+
+### LLM Configuration
+- Ollama (local): set `PROVIDER=ollama`, ensure `ollama` is running. Optionally set `OLLAMA_MODEL=llama3`.
+- Qwen/OpenAI-compatible: set `PROVIDER=openai`, `OPENAI_API_KEY=...`, optionally `OPENAI_API_BASE` and `OPENAI_MODEL` (e.g., `qwen2.5` on a compatible endpoint).
+
+Environment variables:
+```
+PROVIDER=ollama|openai
+OLLAMA_MODEL=llama3
+OPENAI_API_KEY=sk-...
+OPENAI_API_BASE=https://api.your-endpoint
+OPENAI_MODEL=gpt-4o-mini or qwen2.5
+
+# Optional external services
+ADMET_API_URL=https://...
+REACTION_API_URL=https://...
+RETRO_API_URL=https://...
+SERPAPI_API_KEY=...
+```
+
+### Dataset
+Place a CSV at `dataset/sample_mols.csv` with a `smiles` column and optional metadata. A small placeholder is included.
+
+### CLI Usage
+```bash
+# if installed with -e .
+pharm-agent props "CCO"
+pharm-agent admet "CCO"
+pharm-agent reaction "CCO" "+ O=O"
+pharm-agent retro "CC(=O)OC1=CC=CC=C1C(=O)O"
+pharm-agent similar "CCO" --top-k 5
+pharm-agent search --query "ACE inhibitors binding" --engine ddg
+pharm-agent draw "CCO" --out ethanol.png
+pharm-agent agent
+
+# or via module
+python -m pharm_agent.cli props "CCO"
+python -m pharm_agent.cli admet "CCO"
+python -m pharm_agent.cli reaction "CCO" "+ O=O"
+python -m pharm_agent.cli retro "CC(=O)OC1=CC=CC=C1C(=O)O"
+python -m pharm_agent.cli similar "CCO" --top-k 5
+python -m pharm_agent.cli search --query "ACE inhibitors binding" --engine ddg
+python -m pharm_agent.cli draw "CCO" --out ethanol.png
+python -m pharm_agent.cli agent
+```
+
+### Reference
+Inspired by ChemCrow: `https://github.com/ur-whitelab/chemcrow-public.git`.
+
 # Introduction to GitHub
 
 _Get started using GitHub in less than an hour._
