@@ -10,6 +10,12 @@ class AppConfig(BaseModel):
     openai_api_base: str | None = os.getenv("OPENAI_API_BASE")
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
+    # dashscope (阿里云)
+    dashscope_api_key: str | None = os.getenv("DASHSCOPE_API_KEY")
+    dashscope_api_base: str = os.getenv("DASHSCOPE_API_BASE", "https://dashscope.aliyuncs.com/compatible-mode/v1")
+    dashscope_model: str = os.getenv("DASHSCOPE_MODEL", "qwen-plus")
+
+    
     admet_api_url: str | None = os.getenv("ADMET_API_URL")
     reaction_api_url: str | None = os.getenv("REACTION_API_URL")
     retro_api_url: str | None = os.getenv("RETRO_API_URL")
