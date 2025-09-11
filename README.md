@@ -23,7 +23,7 @@ RDKit wheels are used via `rdkit-pypi`. If you have system RDKit, adjust as need
 
 ### LLM Configuration
 - Ollama (local): set `PROVIDER=ollama`, ensure `ollama` is running. Optionally set `OLLAMA_MODEL=llama3`.
-- Qwen/OpenAI-compatible: set `PROVIDER=openai`, `OPENAI_API_KEY=...`, optionally `OPENAI_API_BASE` and `OPENAI_MODEL` (e.g., `qwen2.5` on a compatible endpoint).
+- Qwen/OpenAI-compatible: set `PROVIDER=openai`, `OPENAI_API_KEY=...`, optionally `OPENAI_API_BASE` and `OPENAI_MODEL` (e.g., `qwen2.5` on a compatible endpoint that speaks OpenAI API).
 
 Environment variables:
 ```
@@ -32,6 +32,9 @@ OLLAMA_MODEL=llama3
 OPENAI_API_KEY=sk-...
 OPENAI_API_BASE=https://api.your-endpoint
 OPENAI_MODEL=gpt-4o-mini or qwen2.5
+
+# System role
+SYSTEM_PROMPT=You are PharmAgent, a senior pharmaceutical chemistry expert.
 
 # Optional external services
 ADMET_API_URL=https://...
@@ -68,6 +71,37 @@ python -m pharm_agent.cli agent
 
 ### Reference
 Inspired by ChemCrow: `https://github.com/ur-whitelab/chemcrow-public.git`.
+
+### Structured Output Format
+
+Reaction prediction (`reaction_predict`) returns JSON:
+```
+{
+  "reactants": "CCO + O=O",
+  "predicted_products": [
+    {"smiles": "CC=O", "name": "acetaldehyde", "confidence": 0.62}
+  ],
+  "conditions": {"reagents": "PCC", "solvent": "DCM", "temperature": "rt"},
+  "rationale": "..."
+}
+```
+
+Retrosynthesis (`retrosynthesis`) returns JSON:
+```
+{
+  "target": "CC(=O)OC1=CC=CC=C1C(=O)O",
+  "routes": [
+    {
+      "route_index": 1,
+      "steps": [
+        {"step_index": 1, "transformation": "esterification", "product": "aspirin", "precursors": ["salicylic acid", "acetic anhydride"], "reagents": "H2SO4", "conditions": "reflux"}
+      ],
+      "starting_materials": ["salicylic acid", "acetic anhydride"],
+      "overall_rationale": "..."
+    }
+  ]
+}
+```
 
 # Introduction to GitHub
 

@@ -3,7 +3,10 @@ import requests
 from langchain.tools import tool
 
 from ..config import CONFIG
-from ..llm import get_chat_model
+from ..llm import get_chat_model, invoke_json
+from ..prompts import DEFAULT_SYSTEM_PROMPT, RETRO_JSON_INSTRUCTIONS
+from ..schemas import RetroPlan
+import json
 
 
 def _external_retro(target: str) -> Dict[str, Any] | None:
@@ -17,25 +20,36 @@ def _external_retro(target: str) -> Dict[str, Any] | None:
         return None
 
 
-def _llm_retro(target: str) -> Dict[str, Any]:
+def _llm_retro(target: str) -> RetroPlan:
     chat = get_chat_model()
-    system = (
-        "You are a retrosynthesis planner. Given a target product (SMILES or name), propose 2-3 stepwise synthetic routes, with reagents and conditions. "
-        "Prefer commercially available starting materials. Output concise bullet points."
-    )
-    prompt = f"Target: {target}"
-    res = chat.invoke([{"role": "system", "content": system}, {"role": "user", "content": prompt}])
-    text = res.content if hasattr(res, "content") else str(res)
-    return {"routes_text": text}
+    system = f"{DEFAULT_SYSTEM_PROMPT}\n\nTask: Propose retrosynthetic routes."
+    user = f"Target: {target}\n\n{RETRO_JSON_INSTRUCTIONS}"
+    text = invoke_json(chat, system, user)
+    def _parse(payload: str) -> Dict[str, Any]:
+        try:
+            return json.loads(payload)
+        except Exception:
+            start = payload.find("{")
+            end = payload.rfind("}")
+            if start != -1 and end != -1 and end > start:
+                return json.loads(payload[start : end + 1])
+            raise
+    data = _parse(text)
+    return RetroPlan(**data)
 
 
 @tool("retrosynthesis", return_direct=False)
 def retrosynthesis(target: str) -> Dict[str, Any]:
-    """Recommend retrosynthetic routes for a target product (SMILES or name). Uses external API if configured, else LLM heuristic."""
+    """Recommend retrosynthetic routes for a target product. Output follows RetroPlan schema."""
     external = _external_retro(target)
     if external is not None:
-        return {"source": "external", "result": external}
-    return {"source": "llm", "result": _llm_retro(target)}
+        try:
+            plan = RetroPlan(**external)
+            return {"source": "external", "result": plan.model_dump()}
+        except Exception:
+            return {"source": "external", "raw": external}
+    plan = _llm_retro(target)
+    return {"source": "llm", "result": plan.model_dump()}
 
 
 def make_retro_tool():

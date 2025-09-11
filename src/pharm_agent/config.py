@@ -16,6 +16,11 @@ class AppConfig(BaseModel):
 
     serpapi_key: str | None = os.getenv("SERPAPI_API_KEY")
 
+    # System prompt customization
+    system_prompt: str = os.getenv("SYSTEM_PROMPT", "").strip() or (
+        "You are PharmAgent, a senior pharmaceutical chemistry expert."
+    )
+
 
 CONFIG = AppConfig()
 

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Dict
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 from langchain_community.chat_models import ChatOllama
@@ -23,4 +23,14 @@ def get_chat_model(**overrides: Any) -> BaseChatModel:
         model=model,
         temperature=overrides.get("temperature", 0.2),
     )
+
+
+def invoke_json(chat: BaseChatModel, system_text: str, user_text: str) -> str:
+    messages: List[Dict[str, str]] = [
+        {"role": "system", "content": system_text},
+        {"role": "user", "content": user_text},
+    ]
+    res = chat.invoke(messages)
+    return res.content if hasattr(res, "content") else str(res)
+
 
